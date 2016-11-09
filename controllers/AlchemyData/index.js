@@ -9,6 +9,8 @@ AlchemyData.prototype.get = function (event_data) {
 
 
 
+//    return (_.isFunction(obj.cb)) ? obj.cb(obj) : '';
+
 };
 
 

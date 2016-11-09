@@ -35,7 +35,7 @@ for (var i in routes) {
     }
     try {
         var temp = new (require('./routes/' + route))(app);
-        temp.resource('/api');
+        temp.resource('/api/');
         console.log('App:', 'Route setup for: ', route);
     } catch (e) {
         console.error('App:', 'Exception in Route Include:', route, e);

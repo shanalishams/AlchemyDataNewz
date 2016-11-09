@@ -1,8 +1,6 @@
-function AlchemyData(app) {
+function AlchemyData(mp) {
 
-    this.app = app;
-    this.api = '/api/';
-    this.mainRoute = `${this.api}alchemydata`;
+    this.mainRoute = `${mp}alchemydata`;
 }
 
 
