@@ -1,2 +1,2 @@
-# AlchemyDataNewz
-For Research Perpose
+# AlchemyDataNews
+**For Research Purpose**
