@@ -12,13 +12,16 @@ app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 
 // uncomment after placing your favicon in /public
-//app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
+app.use(favicon(path.join(__dirname, 'public', 'favicon.jpeg')));
 app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
+//app.use(express.static(path.join(__dirname, 'app_client')));
 
+var env = require('node-env-file');
+env(__dirname + '/.env');
 var fs = require("fs");
 var _ = require('lodash');
 var EE = require('eventemitter3');
@@ -36,7 +39,7 @@ for (var i in routes) {
     try {
         var temp = new (require('./routes/' + route))(app);
         temp.resource('/api/');
-        console.log('App:', 'Route setup for: ', route);
+        console.log('App:', 'Loading Routes:', route);
     } catch (e) {
         console.error('App:', 'Exception in Route Include:', route, e);
     }

@@ -1,24 +1,37 @@
-function AlchemyData(mp) {
+function AlchemyData(app) {
+    this.app = app;
 
-    this.mainRoute = `${mp}alchemydata`;
 }
 
 
-AlchemyData.prototype.resource = function () {
-    this.app.get(this.mainRoute, this.index);
+AlchemyData.prototype.resource = function (mp) {
+    this.mainRoute = `${mp}alchemydata`;
+    this.app.get(`${this.mainRoute}/news/:id`, this.show);
+    this.app.get(`${this.mainRoute}/news`, this.index);
 };
 
 
 AlchemyData.prototype.index = function (req, res, next) {
 
-    var event_data = {
+    var eventObj = {
         data: req.query,
         cb: function (response) {
 
             return res.json(response);
         }
     };
-    req.app.ee.emit('AlchemyDataGet', event_data);
+    req.app.ee.emit('AlchemyDataGet', eventObj);
+};
+
+AlchemyData.prototype.show = function (req, res, next) {
+    var eventObj = {
+        data: req.query,
+        cb: function (response) {
+
+            return res.json(response);
+        }
+    };
+    req.app.ee.emit('AlchemyDataShow', eventObj);
 };
 
 

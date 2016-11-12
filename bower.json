@@ -1,0 +1,28 @@
+{
+  "name": "AlchemyDataNewz",
+  "description": "For displying newz based on long/lat given by user",
+  "main": "app.js",
+  "authors": [
+    "Shan Ali"
+  ],
+  "license": "MIT",
+  "keywords": [
+    "alchemy"
+  ],
+  "homepage": "https://github.com/shanalishams/AlchemyDataNewz",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "angular": "^1.5.8",
+    "bootstrap": "^3.3.7",
+    "jQuery": "^3.1.1",
+    "ngmap": "~1.17.8",
+    "angular-route": "~1.5.8"
+  }
+}

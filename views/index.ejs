@@ -1,11 +1,100 @@
 <!DOCTYPE html>
-<html>
-  <head>
+<html ng-app="AlchemyData">
+<head>
     <title><%= title %></title>
-    <link rel='stylesheet' href='/stylesheets/style.css' />
-  </head>
-  <body>
-    <h1><%= title %></h1>
-    <p>Welcome to <%= title %></p>
-  </body>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script lang="javascript" src="/app_client/bower_components/angular/angular.js"
+            type="application/javascript"></script>
+    <script lang="javascript" src="/app_client/bower_components/angular-route/angular-route.js"
+            type="application/javascript"></script>
+    <script lang="javascript" src="/app_client/bower_components/ngmap/build/scripts/ng-map.js"
+            type="application/javascript"></script>
+    <script lang="javascript" src="https://maps.google.com/maps/api/js?key=AIzaSyD72J0RwCX_aqYrZLaaXgUmX6Noghenz1k"
+            type="application/javascript"></script>
+    <script lang="javascript" src="/app_client.js" type="application/javascript"></script>
+    <script lang="javascript" src="/route_config.js" type="application/javascript"></script>
+    <script lang="javascript" src="/app_client/bower_components/jquery/dist/jquery.js"
+            type="application/javascript"></script>
+    <script lang="javascript" src="/app_client/bower_components/bootstrap/dist/js/bootstrap.js"
+            type="application/javascript"></script>
+    <link rel='stylesheet' href='/app_client/bower_components/bootstrap/dist/css/bootstrap.css' type="text/css"/>
+    <link rel='stylesheet' href='/stylesheets/style.css' type="text/css"/>
+</head>
+<body>
+<div class="container">
+    <div class="row">
+        <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+            <h1>Alchemy Data News</h1>
+        </div>
+        <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+            <hr/>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-xs-12 col-sm-12 col-md-3 col-lg-3">
+            <div class="row">
+                <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+                    <div class="filter">
+                        <h2 class="sub-heading">Latest News</h2>
+                        <div>
+                            <label for="list-filter">Filter : </label>
+                            <input ng-model="filterQuery" id="list-filter" name="list-filter" class="form-control"
+                                   type="text">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+                    <div ng-controller="ListController" class="my_list-group-limit list-group">
+                        <a ng-repeat="news in docs | filter: filterQuery" ng-href="#/news/{{news.id}}" id=""
+                           class="list-group-item list-group-item-action">
+                            <h5 class="list-group-item-heading">{{news.source.enriched.url.title}}</h5>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xs-12 col-sm-12 col-md-9 col-lg-9">
+            <div class="row">
+                <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+                    <form name="latLngFrom" ng-controller="ProcessController" class="form-inline text-center">
+                        <div class="form-group">
+                            <label class="sr-only" for="latitude3">latitude</label>
+                            <input name="lat" ng-model="query.lat"
+                                   ng-pattern="/^(\+|-)?(?:90(?:(?:\.0{1,15})?)|(?:[0-9]|[1-8][0-9])(?:(?:\.[0-9]{1,15})?))$/"
+                                   type="text" class="form-control" id="lat" placeholder="Enter Latitude">
+                        </div>
+                        <div class="form-group">
+                            <label class="sr-only" for="longitude">longitude</label>
+                            <input name="lng" ng-model="query.lng"
+                                   ng-pattern="/^(\+|-)?(?:180(?:(?:\.0{1,15})?)|(?:[0-9]|[1-9][0-9]|1[0-7][0-9])(?:(?:\.[0-9]{1,15})?))$/"
+                                   type="text" class="form-control" id="lng" placeholder="Enter Longitude">
+                        </div>
+                        <button ng-click="processQuery()" type="button" class="btn btn-primary">Get News</button>
+                        <span class="text-danger"
+                              ng-show="latLngFrom.lat.$error.pattern || latLngFrom.lng.$error.pattern">Check Your Coordinates</span>
+                    </form>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+                    <div id="map" ng-controller="MapController" class="my_map">
+                        <ng-map center="{{latlng}}" zoom="{{zoom}}" on-click="processMap(event);">
+                            <marker position="{{latlng}}" draggable="true" on-dragend="markerDragEnd(event)"
+                                    on-click="processMarker(event);" animation="Animation.BOUNCE"
+                                    centered="true"></marker>
+                        </ng-map>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+                    <div ng-view class="my_detail">
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
 </html>
