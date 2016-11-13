@@ -25,7 +25,7 @@ AlchemyData.prototype.index = function (req, res, next) {
 
 AlchemyData.prototype.show = function (req, res, next) {
     var eventObj = {
-        data: req.query,
+        data: req.params.id,
         cb: function (response) {
 
             return res.json(response);

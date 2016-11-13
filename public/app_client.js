@@ -7,6 +7,7 @@ var infoWindow = null;
 function DataHolderFactory() {
 
     return {
+        docs: null,
         lat: 33.7294,
         lng: 73.0931,
         geoCode: geoCode
@@ -48,13 +49,22 @@ function AlchemyApiFactory($http) {
         getNewsDetail: getNewsDetail
     };
 
-    function getNews() {
+    function getNews(dataHolderFactory, result) {
         return $http
-            .get('/api/alchemydata/news/')
+            .get('/api/alchemydata/news/', {
+                params: {
+                    lat: dataHolderFactory.lat,
+                    lng: dataHolderFactory.lng,
+                    result: JSON.stringify(result)
+                }
+            })
             .then(function (response) {
                 var responseData = response.data;
                 if (responseData.status == 'OK') {
-                    return responseData.result.docs;
+                    return responseData.result;
+                } else {
+                    console.error(responseData);
+                    return null;
                 }
             }, function (response) {
                 //Second error handler
@@ -68,8 +78,10 @@ function AlchemyApiFactory($http) {
             .then(function (response) {
                 var responseData = response.data;
                 if (responseData.status == 'OK') {
-
-                    return responseData.result.docs;
+                    return responseData.result;
+                } else {
+                    console.error(responseData);
+                    return null;
                 }
             }, function (response) {
                 //Second error handler
@@ -100,9 +112,10 @@ function MapController($scope, NgMap, $DataHolderFactory, $AlchemyApi) {
         marker.setPosition($DataHolderFactory);
         $DataHolderFactory.geoCode($DataHolderFactory, function (results) {
 
-            $AlchemyApi.getNews(results)
+            $AlchemyApi.getNews($DataHolderFactory, results)
                 .then(function (data) {
-                    $scope.docs = data;
+                    $DataHolderFactory.docs = data;
+                    $scope.docs = $DataHolderFactory;
                 });
         });
 
@@ -114,9 +127,10 @@ function MapController($scope, NgMap, $DataHolderFactory, $AlchemyApi) {
         $DataHolderFactory.lng = event.latLng.lng();
         $DataHolderFactory.geoCode($DataHolderFactory, function (results) {
 
-            $AlchemyApi.getNews(results)
+            $AlchemyApi.getNews($DataHolderFactory, results)
                 .then(function (data) {
-                    $scope.docs = data;
+                    $DataHolderFactory.docs = data;
+                    $scope.docs = $DataHolderFactory;
                 });
         });
 
@@ -124,21 +138,23 @@ function MapController($scope, NgMap, $DataHolderFactory, $AlchemyApi) {
 
 }//end of MapController
 
-ListController.$inject = ['$scope', '$AlchemyApi'];
-function ListController($scope, $AlchemyApi) {
-    $AlchemyApi.getNews()
+ListController.$inject = ['$scope', '$AlchemyApi', '$DataHolderFactory'];
+function ListController($scope, $AlchemyApi, $DataHolderFactory) {
+
+    $AlchemyApi.getNews($DataHolderFactory)
         .then(function (data) {
-            $scope.docs = data;
+            $DataHolderFactory.docs = data;
+            $scope.docs = $DataHolderFactory;
         });
 }//end of ListController
 
-DetailController.$inject = ['$scope', '$routeParams', '$AlchemyApi'];
+DetailController.$inject = ['$scope', '$AlchemyApi', '$routeParams'];
 function DetailController($scope, $AlchemyApi, $routeParams) {
     $scope.hello = 'Hello world!';
 
     $AlchemyApi.getNewsDetail($routeParams.id)
         .then(function (data) {
-            $scope.data = data;
+            $scope.doc = data;
         });
 
 }//end of DetailController
@@ -153,9 +169,10 @@ function ProcessController($scope, $AlchemyApi, $DataHolderFactory) {
         $DataHolderFactory = $scope.query;
         $DataHolderFactory.geoCode($DataHolderFactory, function (results) {
 
-            $AlchemyApi.getNews(results)
+            $AlchemyApi.getNews($DataHolderFactory, results)
                 .then(function (data) {
-                    $scope.docs = data;
+                    $DataHolderFactory = data;
+                    $scope.docs = $DataHolderFactory;
                 });
         });
 
