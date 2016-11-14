@@ -1,6 +1,10 @@
 <div class="caption">
-    <h4>{{doc.source.enriched.url.title}}</h4>
-    <p>
-        {{doc.source.enriched.url.text}}
+    <h4 ng-bind="doc.source.enriched.url.title"></h4>
+    <h5 ng-bind="doc.source.enriched.url.author"></h5>
+    <h6 ng-cloak="doc.timestamp*1000 | date:'yyyy-MM-dd'"></h6>
+    <p ng-bind="doc.source.enriched.url.text">
     </p>
+    <ul class="list-unstyled list-inline blog-tags">
+        <li><a ng-href="{{doc.source.original.url}}" target="_blank"><span class="fa fa-tag"></span>Original Link</a></li>
+    </ul>
 </div>
