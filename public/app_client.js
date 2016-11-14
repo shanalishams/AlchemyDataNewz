@@ -61,7 +61,9 @@ function AlchemyApiFactory($http) {
             .then(function (response) {
                 var responseData = response.data;
                 if (responseData.status == 'OK') {
-                    return responseData.result;
+                    return responseData.result.docs[0].docs;
+                } else if (responseData.statusCode == 400) {
+                    alert("Backend API limit exceeded");
                 } else {
                     console.error(responseData);
                     return null;
@@ -94,8 +96,8 @@ function MainController($scope) {
 
 }//end of MainController
 
-ProcessController.$inject = ['$scope', 'NgMap', '$DataHolderFactory', '$AlchemyApi'];
-function MapController($scope, NgMap, $DataHolderFactory, $AlchemyApi) {
+ProcessController.$inject = ['$scope', 'NgMap', '$DataHolderFactory', '$AlchemyApi', '$rootScope'];
+function MapController($scope, NgMap, $DataHolderFactory, $AlchemyApi, $rootScope) {
 
     $scope.latlng = [$DataHolderFactory.lat, $DataHolderFactory.lng];
     $scope.zoom = 11;
@@ -105,6 +107,8 @@ function MapController($scope, NgMap, $DataHolderFactory, $AlchemyApi) {
 
     $scope.processMap = function (event) {
         map = this;
+        $rootScope.listLoader = 1;
+        $DataHolderFactory.docs = [];
         var markers = map.markers;
         var marker = markers[0];
         $DataHolderFactory.lat = event.latLng.lat();
@@ -116,6 +120,7 @@ function MapController($scope, NgMap, $DataHolderFactory, $AlchemyApi) {
                 .then(function (data) {
                     $DataHolderFactory.docs = data;
                     $scope.docs = $DataHolderFactory;
+                    $rootScope.listLoader = 0;
                 });
         });
 
@@ -123,6 +128,8 @@ function MapController($scope, NgMap, $DataHolderFactory, $AlchemyApi) {
     };
 
     $scope.markerDragEnd = function (event) {
+        $rootScope.listLoader = 1;
+        $DataHolderFactory.docs = [];
         $DataHolderFactory.lat = event.latLng.lat();
         $DataHolderFactory.lng = event.latLng.lng();
         $DataHolderFactory.geoCode($DataHolderFactory, function (results) {
@@ -131,6 +138,7 @@ function MapController($scope, NgMap, $DataHolderFactory, $AlchemyApi) {
                 .then(function (data) {
                     $DataHolderFactory.docs = data;
                     $scope.docs = $DataHolderFactory;
+                    $rootScope.listLoader = 0;
                 });
         });
 
@@ -138,41 +146,47 @@ function MapController($scope, NgMap, $DataHolderFactory, $AlchemyApi) {
 
 }//end of MapController
 
-ListController.$inject = ['$scope', '$AlchemyApi', '$DataHolderFactory'];
-function ListController($scope, $AlchemyApi, $DataHolderFactory) {
+ListController.$inject = ['$scope', '$AlchemyApi', '$DataHolderFactory', '$rootScope'];
+function ListController($scope, $AlchemyApi, $DataHolderFactory, $rootScope) {
 
+    $rootScope.listLoader = 1;
+    $DataHolderFactory.docs = [];
     $AlchemyApi.getNews($DataHolderFactory)
         .then(function (data) {
             $DataHolderFactory.docs = data;
             $scope.docs = $DataHolderFactory;
+            $rootScope.listLoader = 0;
         });
 }//end of ListController
 
 DetailController.$inject = ['$scope', '$AlchemyApi', '$routeParams'];
 function DetailController($scope, $AlchemyApi, $routeParams) {
-    $scope.hello = 'Hello world!';
-
+    $scope.detaiLoader = 1;
     $AlchemyApi.getNewsDetail($routeParams.id)
         .then(function (data) {
             $scope.doc = data;
+            $scope.detaiLoader = 0;
         });
 
 }//end of DetailController
 
-ProcessController.$inject = ['$scope', '$AlchemyApi', '$DataHolderFactory'];
-function ProcessController($scope, $AlchemyApi, $DataHolderFactory) {
-
+ProcessController.$inject = ['$scope', '$AlchemyApi', '$DataHolderFactory', '$rootScope'];
+function ProcessController($scope, $AlchemyApi, $DataHolderFactory, $rootScope) {
+    $scope.detaiLoader = 1;
+    $DataHolderFactory.docs = [];
     $scope.query = $DataHolderFactory;
 
     $scope.processQuery = function () {
-
+        $rootScope.listLoader = 1;
         $DataHolderFactory = $scope.query;
         $DataHolderFactory.geoCode($DataHolderFactory, function (results) {
 
             $AlchemyApi.getNews($DataHolderFactory, results)
                 .then(function (data) {
-                    $DataHolderFactory = data;
+                    $DataHolderFactory.doc = data;
                     $scope.docs = $DataHolderFactory;
+                    $scope.detaiLoader = 0;
+                    $rootScope.listLoader = 0;
                 });
         });
 

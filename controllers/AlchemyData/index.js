@@ -11,7 +11,7 @@ var cloudant = Cloudant({
 var alchemyNewsDB = cloudant.db.use('alchemy_new');
 
 var alchemyDataNews = new AlchemyDataNewsV1({
-    api_key: process.env.ALCHEMY_API_KEY
+    api_key: process.env.ALCHEMY_API_KEY2
 });
 
 function AlchemyData(app) {
@@ -25,22 +25,27 @@ AlchemyData.prototype.get = function (eventObj) {
     var data = eventObj.data;
     var lat = data.lat;
     var lng = data.lng;
-    var reverseGeoCodeData = null;
+    var reverseGeoCodeData = [];
     var formattedAddress = 'Pakistan';
+    var formattedAddresses = [];
     try {
         reverseGeoCodeData = JSON.parse(data.result);
+        for (var i = 0; i < reverseGeoCodeData.length; i++) {
+            formattedAddresses.push({formattedAddress: reverseGeoCodeData[i]});
+        }//end of for
         formattedAddress = reverseGeoCodeData[0].formatted_address;
-        formattedAddress = formattedAddress.replace(', ', '^');
     } catch (ex) {
+        formattedAddresses.push({formattedAddress: formattedAddress});
         console.log(ex.message);
     }//end of try-catch
 
+    formattedAddress = formattedAddress.replace(', ', '^');
 
     var params = {
         start: 'now-3h',
         end: 'now',
         outputMode: 'json',
-        count: 5,
+        count: 10,
         return: 'enriched.url.title,enriched.url.text,enriched.url.author,original.url',
         q: `q.enriched.url.entities.entity.text=O[${formattedAddress}]`
 
@@ -51,6 +56,17 @@ AlchemyData.prototype.get = function (eventObj) {
         if (err) {
             newsResult = err;
             console.error('AlchemyData:', 'alchemyDataNews:', 'error:', err);
+            if (err.code == 400) {
+
+                var errorObj = {
+                    status: 'error',
+                    statusCode: err.code,
+                    error: err.message
+                };
+                console.error('AlchemyData:', 'alchemyDataNews:', errorObj);
+
+            }//in case of api limit is exceeded
+
 
         } else {
             newsResult = news;
@@ -58,20 +74,42 @@ AlchemyData.prototype.get = function (eventObj) {
 
         }//end of if-else
 
-        var docs = null;
+        //index is necessary for searching in cloudant db
+        var index = {
+            "index": {},
+            "type": "text"
+        };
+
+        alchemyNewsDB.index(index, function (er, response) {
+            if (er) {
+                console.error('AlchemyData:', 'alchemyNewsDB', response.err);
+            } else {
+                console.info('AlchemyData:', 'alchemyNewsDB', response.result);
+            }
+        });
+
+        var records = null;
         if (newsResult.status == 'OK' && newsResult.result.docs) {
-            docs = newsResult.result.docs;
+            var docs = newsResult.result.docs;
+            records = [{
+                lat: lat,
+                lng: lng,
+                formattedAddresses: formattedAddresses,
+                docs: docs
+            }];
         } else {
-            docs = [];
+
+            records = [];
+
         }//end of if-else
         try {
 
             var ids = [];
 
-            async.forEach(docs, function (doc, callback) {
+            async.forEach(records, function (record, callback) {
 
-                    alchemyNewsDB.insert(doc, doc.id, function (err, body, header) {
-                        ids.push(doc.id);
+                    alchemyNewsDB.insert(record, function (err, body, header) {
+                        ids.push(body.id);
                         if (err) {
                             console.error('AlchemyData:', 'alchemyNewsDB', body);
                         } else {
@@ -86,7 +124,8 @@ AlchemyData.prototype.get = function (eventObj) {
                     if (err) {
                         console.error('AlchemyData:', 'alchemyNewsDB', err.message);
                     }
-                    var result = [];
+
+                    var result = null;
                     async.forEach(ids, function (id, callback) {
 
                             alchemyNewsDB.get(id, function (err, data, header) {
@@ -95,7 +134,7 @@ AlchemyData.prototype.get = function (eventObj) {
                                     callback(err);
                                 } else {
                                     console.info('AlchemyData:', 'alchemyNewsDB', data);
-                                    result.push(data);
+                                    result = data;
                                     callback();
                                 }//end of if-else
                             });
@@ -114,11 +153,53 @@ AlchemyData.prototype.get = function (eventObj) {
 
                             console.info('AlchemyData:', 'alchemyNewsDB', result);
 
-                            return (_.isFunction(eventObj.cb)) ? eventObj.cb({
-                                status: 'OK',
-                                statusCode: 200,
-                                result: result
-                            }) : '';
+                            if (result != null) {
+
+                                return (_.isFunction(eventObj.cb)) ? eventObj.cb({
+                                    status: 'OK',
+                                    statusCode: 200,
+                                    result: {docs: [result]}
+                                }) : '';
+
+                            } else {
+
+                                //@Todo : Executed in case of if Alchemy API's data
+                                //limit is reached or found empty results as a result of
+                                //given query.This workaround may be removed in feature
+                                //it getting values from the db and give it to user
+
+                                var query = {
+                                    selector: {
+                                        formattedAddresses: {
+                                            $elemMatch: {
+                                                formattedAddress: formattedAddress
+                                            }
+                                        }
+                                    }
+                                };
+                                alchemyNewsDB.find(query, function (err, result, header) {
+                                    if (err) {
+
+                                        console.error('AlchemyData:', 'alchemyNewsDB', result);
+                                        var errorObj = {
+                                            status: 'error',
+                                            statusCode: err.headers.statusCode,
+                                            error: err.message
+                                        };
+                                        return (_.isFunction(eventObj.cb)) ? eventObj.cb(errorObj) : '';
+
+                                    } else {
+
+                                        console.info('AlchemyData:', 'alchemyNewsDB', result);
+                                        return (_.isFunction(eventObj.cb)) ? eventObj.cb({
+                                            status: 'OK',
+                                            statusCode: 200,
+                                            result: result
+                                        }) : '';
+
+                                    }//end of if-else
+                                });
+                            }//end of if-else
                         });
                 });
 
@@ -133,7 +214,19 @@ AlchemyData.prototype.get = function (eventObj) {
 
 AlchemyData.prototype.show = function (eventObj) {
 
-    alchemyNewsDB.get(eventObj.data, function (err, result, header) {
+    var query = {
+        selector: {
+            docs: {
+                $elemMatch: {
+                    id: eventObj.data
+                }
+            }
+        },
+        fields: [
+            'docs'
+        ]
+    };
+    alchemyNewsDB.find(query, function (err, result, header) {
         if (err) {
 
             console.error('AlchemyData:', 'alchemyNewsDB', result);
@@ -145,12 +238,23 @@ AlchemyData.prototype.show = function (eventObj) {
             return (_.isFunction(eventObj.cb)) ? eventObj.cb(errorObj) : '';
 
         } else {
+            try {
 
-            console.info('AlchemyData:', 'alchemyNewsDB', result);
+                var docs = result.docs[0].docs;
+                var index = _.findIndex(docs, function (o) {
+                    return o.id == eventObj.data;
+                });
+                var doc = docs[index];
+
+            } catch (ex) {
+                console.error(ex);
+            }//end of try-catch
+
+            console.info('AlchemyData:', 'alchemyNewsDB', doc);
             return (_.isFunction(eventObj.cb)) ? eventObj.cb({
                 status: 'OK',
                 statusCode: 200,
-                result: result
+                result: doc
             }) : '';
 
         }//end of if-else

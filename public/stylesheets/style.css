@@ -1,5 +1,9 @@
+ng-map{
+    display: block; height: 240px;
+}
+
 .my_detail {
-    margin-top: 12.3%;
+    margin-top: 8%;
 }
  .my_map{
     height: 200px;
