@@ -25,8 +25,10 @@ function DataHolderFactory() {
                     if (infoWindow == null) {
                         infoWindow = new google.maps.InfoWindow;
                     }
+                    var marker = map.markers[0];
+                    marker.setPosition(latLng);
                     infoWindow.setContent(results[1].formatted_address);
-                    infoWindow.open(map, map.markers[0]);
+                    infoWindow.open(map, marker);
 
                     callback(results);
 
@@ -178,7 +180,8 @@ function ProcessController($scope, $AlchemyApi, $DataHolderFactory, $rootScope) 
 
     $scope.processQuery = function () {
         $rootScope.listLoader = 1;
-        $DataHolderFactory = $scope.query;
+        $DataHolderFactory.lat = parseFloat($scope.query.lat);
+        $DataHolderFactory.lng = parseFloat($scope.query.lng);
         $DataHolderFactory.geoCode($DataHolderFactory, function (results) {
 
             $AlchemyApi.getNews($DataHolderFactory, results)
