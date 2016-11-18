@@ -11,7 +11,7 @@ var cloudant = Cloudant({
 var alchemyNewsDB = cloudant.db.use('alchemy_new');
 
 var alchemyDataNews = new AlchemyDataNewsV1({
-    api_key: process.env.ALCHEMY_API_KEY2
+    api_key: process.env.ALCHEMY_API_KEY
 });
 
 function AlchemyData(app) {
@@ -36,7 +36,7 @@ AlchemyData.prototype.get = function (eventObj) {
         formattedAddress = reverseGeoCodeData[0].formatted_address;
     } catch (ex) {
         formattedAddresses.push({formattedAddress: formattedAddress});
-        console.log(ex.message);
+        console.error(ex.message);
     }//end of try-catch
 
     formattedAddress = formattedAddress.replace(', ', '^');
@@ -80,9 +80,9 @@ AlchemyData.prototype.get = function (eventObj) {
             "type": "text"
         };
 
-        alchemyNewsDB.index(index, function (er, response) {
-            if (er) {
-                console.error('AlchemyData:', 'alchemyNewsDB', response.err);
+        alchemyNewsDB.index(index, function (err, response) {
+            if (err) {
+                console.error('AlchemyData:', 'alchemyNewsDB', err);
             } else {
                 console.info('AlchemyData:', 'alchemyNewsDB', response.result);
             }

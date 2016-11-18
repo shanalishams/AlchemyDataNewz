@@ -38,7 +38,8 @@ function DataHolderFactory() {
                 }//end of if-else
             } else {
                 console.error('GeoCoder failed due to: ' + status);
-                result = 'GeoCoder failed due to: ' + status;
+                result = 'Unable to Reverse geocode given coordinates: ' + status;
+                alert(result);
             }//end of if-else
         });
     }
@@ -62,12 +63,13 @@ function AlchemyApiFactory($http) {
             })
             .then(function (response) {
                 var responseData = response.data;
-                if (responseData.status == 'OK') {
+                if (responseData.status == 'OK' && responseData.result.docs.length > 0) {
                     return responseData.result.docs[0].docs;
                 } else if (responseData.statusCode == 400) {
                     alert("Backend API limit exceeded");
                 } else {
                     console.error(responseData);
+                    alert("Cant find any news related to this region");
                     return null;
                 }
             }, function (response) {
@@ -179,6 +181,7 @@ function ProcessController($scope, $AlchemyApi, $DataHolderFactory, $rootScope) 
     $scope.query = $DataHolderFactory;
 
     $scope.processQuery = function () {
+        $DataHolderFactory.docs = [];
         $rootScope.listLoader = 1;
         $DataHolderFactory.lat = parseFloat($scope.query.lat);
         $DataHolderFactory.lng = parseFloat($scope.query.lng);
